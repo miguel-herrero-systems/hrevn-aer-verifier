@@ -1,0 +1,33 @@
+{
+  "marketplace_version": "1.0",
+  "plugins": [
+    {
+      "id": "hrevn-aer-verifier",
+      "name": "HREVN AER Verifier",
+      "version": "0.1.0",
+      "description": "Verify, inspect and summarize HREVN Agent Evaluation Record (AER) bundles. Gives AI agents structured, verifiable evidence to inspect, justify and reason over — reducing hallucination on document-heavy compliance tasks.",
+      "author": "HREVN",
+      "homepage": "https://hrevn.com",
+      "keywords": ["hrevn", "aer", "verification", "compliance", "ai-act", "eu-ai-act", "bundle", "integrity", "audit"],
+      "manifest": ".codex-plugin/plugin.json",
+      "entry": "main.py",
+      "runtime": "python3",
+      "min_python": "3.10",
+      "dependencies": [],
+      "tools": [
+        "verify_bundle",
+        "inspect_manifest",
+        "list_evidence",
+        "check_anchor",
+        "summarize_bundle"
+      ],
+      "use_cases": [
+        "Verify integrity of an AER bundle before AI reasoning",
+        "Inspect bundle metadata in compliance workflows",
+        "List evidence artifacts with hashes for audit trails",
+        "Check blockchain anchoring status",
+        "Generate executive summary of AER packages"
+      ]
+    }
+  ]
+}

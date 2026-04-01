@@ -1,0 +1,22 @@
+{
+  "id": "hrevn-aer-verifier",
+  "name": "HREVN AER Verifier",
+  "version": "0.1.0",
+  "description": "Verify, inspect and summarize HREVN Agent Evaluation Record (AER) bundles. Gives AI agents structured, verifiable evidence to inspect, justify and reason over.",
+  "author": "HREVN",
+  "license": "proprietary",
+  "homepage": "https://hrevn.com",
+  "keywords": ["hrevn", "aer", "verification", "compliance", "ai-act", "bundle", "integrity"],
+  "skills": [
+    "skills/verify_bundle.md",
+    "skills/inspect_manifest.md",
+    "skills/list_evidence.md",
+    "skills/check_anchor.md",
+    "skills/summarize_bundle.md"
+  ],
+  "entry": "main.py",
+  "runtime": "python3",
+  "min_python": "3.10",
+  "dependencies": [],
+  "schema_version": "codex-plugin-v1"
+}

@@ -1,0 +1,112 @@
+HREVN™ AER FORMAT LICENSE
+Proprietary License — All Rights Reserved
+
+Copyright (c) 2026 HREVN
+All rights reserved.
+
+---
+
+1. DEFINITIONS
+
+"Format" means the HREVN Agent Evaluation Record (AER) bundle specification,
+including but not limited to:
+
+  - The AER bundle structure and file layout
+  - The manifest.json schema, fields, and semantics
+  - The ROOT_SPEC_AER_V1 root hash computation algorithm
+  - The checksum scope and root scope definitions
+  - The artifact category and role taxonomy
+  - The verification model specification
+  - Any future versions or derivatives of the above
+
+"HREVN™" means the brand, trademark, and trade name HREVN, including any
+associated logos, identifiers, and certification marks.
+
+"Generation" means producing, emitting, or constructing AER bundles that
+conform to the Format.
+
+"Verification" means reading, inspecting, or validating AER bundles against
+the Format specification.
+
+---
+
+2. GRANT OF RIGHTS — VERIFICATION
+
+You are granted a royalty-free, worldwide, non-exclusive license to:
+
+  - Verify, inspect, and read AER bundles using the open-source verifier
+    software provided in this repository under LICENSE-VERIFIER.
+  - Reference the Format specification for the purpose of implementing
+    verification tooling.
+
+This grant does not include the right to generate AER bundles for
+commercial use (see Section 3).
+
+---
+
+3. RESTRICTIONS — GENERATION
+
+You may NOT, without a separate written commercial license from HREVN:
+
+  a) Generate AER bundles for commercial purposes, including but not limited
+     to internal business use, client deliverables, or SaaS products.
+
+  b) Build or distribute software that generates AER bundles and represents
+     them as HREVN™-compliant or HREVN™-compatible.
+
+  c) Claim HREVN™ certification or compatibility for any product or service
+     without written authorization from HREVN.
+
+  d) Use the HREVN™ trademark, brand, or certification marks in any product,
+     service, or marketing material without written authorization.
+
+---
+
+4. DEMO BUNDLES
+
+The demo bundles included in demo/ are provided for evaluation and testing
+purposes only. They may not be used as templates for production bundle
+generation without a commercial license.
+
+---
+
+5. COMMERCIAL LICENSING
+
+To obtain a commercial license for AER bundle generation, integration of the
+Format into your products, or use of the HREVN™ certification mark, contact:
+
+  ai.agent.human.services@gmail.com
+
+Commercial licenses are available on a per-deployment, per-seat, or
+revenue-share basis depending on use case.
+
+---
+
+6. ATTRIBUTION
+
+Any product or publication that uses HREVN AER bundles or references the
+HREVN AER Format must include the following attribution:
+
+  "Uses the HREVN™ AER format — hrevn.com"
+
+---
+
+7. NO WARRANTY
+
+THE FORMAT SPECIFICATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+HREVN MAKES NO WARRANTIES REGARDING FITNESS FOR REGULATORY COMPLIANCE,
+INCLUDING BUT NOT LIMITED TO EU AI ACT ARTICLE 9 OBLIGATIONS. USERS ARE
+RESPONSIBLE FOR THEIR OWN LEGAL AND COMPLIANCE ASSESSMENT.
+
+---
+
+8. GOVERNING LAW
+
+This license is governed by the laws of Spain. Any disputes shall be subject
+to the exclusive jurisdiction of the courts of Seville, Spain.
+
+---
+
+HREVN
+https://hrevn.com
+ai.agent.human.services@gmail.com
