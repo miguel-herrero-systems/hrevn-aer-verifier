@@ -26,7 +26,7 @@ Experimental, standard-library Python tools for inspecting the internal integrit
 ## Quickstart
 
 ```bash
-git clone https://github.com/ai-human-andalusia/hrevn-aer-verifier.git
+git clone https://github.com/miguel-herrero-systems/hrevn-aer-verifier.git
 cd hrevn-aer-verifier
 python3 quickstart.py
 python3 -m unittest discover -s tests -v

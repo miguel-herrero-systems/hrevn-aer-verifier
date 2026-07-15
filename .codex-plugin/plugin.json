@@ -8,7 +8,7 @@
     "url": "https://hrevn.com"
   },
   "homepage": "https://hrevn.com",
-  "repository": "https://github.com/ai-human-andalusia/hrevn-aer-verifier",
+  "repository": "https://github.com/miguel-herrero-systems/hrevn-aer-verifier",
   "license": "MIT AND LicenseRef-HREVN-AER-Format",
   "keywords": ["hrevn", "aer", "verification", "bundle", "integrity", "audit"],
   "skills": "./skills/",
