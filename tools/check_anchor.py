@@ -1,12 +1,19 @@
-"""
-check_anchor.py
-Check whether the bundle contains an external anchor (e.g. blockchain).
+"""Inspect optional anchor metadata embedded in an AER bundle.
+
+This module does not query a blockchain node and does not establish inclusion,
+canonical-chain membership, confirmations, or finality.
 """
 
-import sys, os, json
+from __future__ import annotations
+
+import json
+import os
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from core import load_bundle, BundleLoadError, parse_manifest, ManifestError
+from core import BundleLoadError, ManifestError, load_bundle, parse_manifest
+
 
 KNOWN_ANCHOR_FILES = [
     "ANCHOR_SEPOLIA.json",
@@ -18,11 +25,15 @@ KNOWN_ANCHOR_FILES = [
 
 
 def check_anchor(source: str) -> dict:
+    """Report the presence and parseability of embedded anchor metadata only."""
+
     result = {
         "tool": "check_anchor",
         "source": str(source),
         "ok": False,
         "error": None,
+        "verification_scope": "metadata_presence_only",
+        "on_chain_verification_performed": False,
         "anchor_present": False,
         "anchor_file": None,
         "anchor_status_manifest": None,
@@ -31,42 +42,40 @@ def check_anchor(source: str) -> dict:
 
     try:
         files = load_bundle(source)
-    except BundleLoadError as e:
-        result["error"] = str(e)
+    except BundleLoadError as exc:
+        result["error"] = str(exc)
         return result
 
     result["ok"] = True
 
-    # Check manifest declaration
     if "manifest.json" in files:
         try:
-            m = parse_manifest(files["manifest.json"])
-            result["anchor_status_manifest"] = m.external_anchor_status
+            manifest = parse_manifest(files["manifest.json"])
+            result["anchor_status_manifest"] = manifest.external_anchor_status
         except ManifestError:
             pass
 
-    # Look for known anchor files
     for candidate in KNOWN_ANCHOR_FILES:
-        if candidate in files:
-            result["anchor_present"] = True
-            result["anchor_file"] = candidate
-            try:
-                result["anchor_data"] = json.loads(files[candidate].decode("utf-8"))
-            except Exception:
-                result["anchor_data"] = {"raw": files[candidate].decode("utf-8", errors="replace")}
-            break
+        if candidate not in files:
+            continue
+        result["anchor_present"] = True
+        result["anchor_file"] = candidate
+        try:
+            result["anchor_data"] = json.loads(files[candidate].decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            result["error"] = f"anchor_metadata_parse_error: {exc}"
+            result["ok"] = False
+        return result
 
-    # Also scan for any file with "anchor" in the name
-    if not result["anchor_present"]:
-        for fname in files:
-            if "anchor" in fname.lower() and fname != "manifest.json":
-                result["anchor_present"] = True
-                result["anchor_file"] = fname
-                break
+    for filename in files:
+        if "anchor" in filename.lower() and filename != "manifest.json":
+            result["anchor_present"] = True
+            result["anchor_file"] = filename
+            break
 
     return result
 
 
 if __name__ == "__main__":
-    src = sys.argv[1] if len(sys.argv) > 1 else "."
-    print(json.dumps(check_anchor(src), indent=2))
+    source = sys.argv[1] if len(sys.argv) > 1 else "."
+    print(json.dumps(check_anchor(source), indent=2))

@@ -1,22 +1,29 @@
 {
-  "id": "hrevn-aer-verifier",
-  "name": "HREVN AER Verifier",
+  "name": "hrevn-aer-verifier",
   "version": "0.1.0",
-  "description": "Verify, inspect and summarize HREVN Agent Evaluation Record (AER) bundles. Gives AI agents structured, verifiable evidence to inspect, justify and reason over.",
-  "author": "HREVN",
-  "license": "proprietary",
+  "description": "Inspect the internal integrity of HREVN Agent Evaluation Record bundles.",
+  "author": {
+    "name": "HREVN",
+    "email": "contact@hrevn.com",
+    "url": "https://hrevn.com"
+  },
   "homepage": "https://hrevn.com",
-  "keywords": ["hrevn", "aer", "verification", "compliance", "ai-act", "bundle", "integrity"],
-  "skills": [
-    "skills/verify_bundle.md",
-    "skills/inspect_manifest.md",
-    "skills/list_evidence.md",
-    "skills/check_anchor.md",
-    "skills/summarize_bundle.md"
-  ],
-  "entry": "main.py",
-  "runtime": "python3",
-  "min_python": "3.10",
-  "dependencies": [],
-  "schema_version": "codex-plugin-v1"
+  "repository": "https://github.com/ai-human-andalusia/hrevn-aer-verifier",
+  "license": "MIT AND LicenseRef-HREVN-AER-Format",
+  "keywords": ["hrevn", "aer", "verification", "bundle", "integrity", "audit"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "HREVN AER Verifier",
+    "shortDescription": "Inspect integrity metadata in synthetic AER bundles.",
+    "longDescription": "Use local Python tools to inspect bundle structure, checksums, root hashes, evidence inventories, and embedded anchor metadata without claiming on-chain verification or regulatory compliance.",
+    "developerName": "HREVN",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Local verification"],
+    "websiteURL": "https://hrevn.com",
+    "defaultPrompt": [
+      "Verify the internal integrity of this AER bundle.",
+      "Inspect this AER bundle's evidence inventory.",
+      "Report embedded anchor metadata without a chain claim."
+    ]
+  }
 }

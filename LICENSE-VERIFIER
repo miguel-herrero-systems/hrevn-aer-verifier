@@ -31,6 +31,8 @@ This license applies exclusively to the verifier software contained in:
   main.py
   quickstart.py
   skills/
+  tests/
+  .codex-plugin/
 
 This license does NOT apply to:
 

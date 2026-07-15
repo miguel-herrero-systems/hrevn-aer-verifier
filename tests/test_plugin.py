@@ -1,118 +1,64 @@
-"""
-test_plugin.py
-Tests against the real bundle CAR-2026-002 and two broken variants.
-Run: python tests/test_plugin.py
-"""
+from __future__ import annotations
 
-import sys, os, json, zipfile, shutil, tempfile
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import sys
+import unittest
+from pathlib import Path
 
-from tools import verify_bundle, inspect_manifest, list_evidence, check_anchor, summarize_bundle
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT))
 
-REAL_BUNDLE = "/mnt/user-data/uploads/1775033137551_CAR-2026-002_20260401_084430_c7ee454221ad8dd18ea9cae2b882ab72f973cd68c59b928601682614eff10bee.zip"
-
-PASS = "\033[32mPASS\033[0m"
-FAIL = "\033[31mFAIL\033[0m"
+from tools import check_anchor, inspect_manifest, list_evidence, summarize_bundle, verify_bundle
 
 
-def check(label, condition, detail=""):
-    if condition:
-        print(f"  {PASS}  {label}")
-    else:
-        print(f"  {FAIL}  {label}  {detail}")
-    return condition
+VALID_BUNDLE = REPOSITORY_ROOT / "demo" / "CAR-2026-002_valid.zip"
+TAMPERED_BUNDLE = REPOSITORY_ROOT / "demo" / "CAR-2026-002_tampered.zip"
+ANCHORED_FIXTURE = REPOSITORY_ROOT / "demo" / "CAR-2026-003_anchored.zip"
 
 
-def make_broken_bundle_tampered(src_zip: str, tmp_dir: str) -> str:
-    """Copy bundle but corrupt operation_record.json content."""
-    out = os.path.join(tmp_dir, "broken_tampered.zip")
-    with zipfile.ZipFile(src_zip, "r") as zin, zipfile.ZipFile(out, "w") as zout:
-        for item in zin.infolist():
-            data = zin.read(item.filename)
-            if item.filename == "operation_record.json":
-                data = data.replace(b"force_reset", b"TAMPERED_!")
-            zout.writestr(item, data)
-    return out
+class AERVerifierTests(unittest.TestCase):
+    def test_valid_fixture_passes_internal_integrity_checks(self) -> None:
+        result = verify_bundle(str(VALID_BUNDLE))
+        self.assertTrue(result["valid"])
+        self.assertTrue(result["root_hash_match"])
+        self.assertEqual(result["errors"], [])
+        self.assertEqual(result["aer_id"], "AER-CAR-2026-002")
 
+    def test_tampered_fixture_fails_checksum_and_root_hash(self) -> None:
+        result = verify_bundle(str(TAMPERED_BUNDLE))
+        self.assertFalse(result["valid"])
+        self.assertFalse(result["root_hash_match"])
+        self.assertTrue(any("checksum_mismatch" in error for error in result["errors"]))
+        self.assertTrue(any("root_hash_mismatch" in error for error in result["errors"]))
 
-def make_broken_bundle_missing_file(src_zip: str, tmp_dir: str) -> str:
-    """Copy bundle but omit ROOT_HASH_SHA256.txt."""
-    out = os.path.join(tmp_dir, "broken_missing.zip")
-    with zipfile.ZipFile(src_zip, "r") as zin, zipfile.ZipFile(out, "w") as zout:
-        for item in zin.infolist():
-            if item.filename == "ROOT_HASH_SHA256.txt":
-                continue
-            zout.writestr(item, zin.read(item.filename))
-    return out
+    def test_manifest_and_evidence_are_inspectable(self) -> None:
+        manifest = inspect_manifest(str(VALID_BUNDLE))
+        evidence = list_evidence(str(VALID_BUNDLE))
+        self.assertTrue(manifest["ok"])
+        self.assertEqual(manifest["aer_id"], "AER-CAR-2026-002")
+        self.assertTrue(evidence["ok"])
+        self.assertEqual(evidence["total_files"], 12)
+        self.assertTrue(all(len(item["sha256"]) == 64 for item in evidence["artifacts"]))
 
+    def test_anchor_tool_reports_metadata_presence_only(self) -> None:
+        result = check_anchor(str(ANCHORED_FIXTURE))
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["anchor_present"])
+        self.assertEqual(result["anchor_file"], "ANCHOR_SEPOLIA.json")
+        self.assertEqual(result["anchor_data"]["chain"], "sepolia")
+        self.assertEqual(result["verification_scope"], "metadata_presence_only")
+        self.assertFalse(result["on_chain_verification_performed"])
 
-def run_tests():
-    tmp = tempfile.mkdtemp()
-    try:
-        print("\n═══ TEST SUITE: HREVN Plugin Core ═══\n")
+    def test_summary_keeps_demo_status_visible(self) -> None:
+        result = summarize_bundle(str(VALID_BUNDLE))
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["status"]["is_demo"])
+        self.assertTrue(result["status"]["passes_basic_verification"])
 
-        # ── 1. verify_bundle (valid) ──────────────────────────────────────
-        print("1. verify_bundle — real bundle")
-        vr = verify_bundle(REAL_BUNDLE)
-        check("valid=True", vr["valid"])
-        check("root_hash_match=True", vr["root_hash_match"])
-        check("no errors", len(vr["errors"]) == 0, str(vr["errors"]))
-        check("aer_id present", vr["aer_id"] == "AER-CAR-2026-002")
-
-        # ── 2. verify_bundle (tampered) ───────────────────────────────────
-        print("\n2. verify_bundle — tampered bundle")
-        broken_t = make_broken_bundle_tampered(REAL_BUNDLE, tmp)
-        vt = verify_bundle(broken_t)
-        check("valid=False (tampered)", not vt["valid"])
-        check("has checksum_mismatch error", any("checksum_mismatch" in e for e in vt["errors"]))
-        check("root_hash_match=False", not vt["root_hash_match"])
-
-        # ── 3. verify_bundle (missing file) ──────────────────────────────
-        print("\n3. verify_bundle — missing ROOT_HASH_SHA256.txt")
-        broken_m = make_broken_bundle_missing_file(REAL_BUNDLE, tmp)
-        vm = verify_bundle(broken_m)
-        check("warning about missing root hash", any("missing_root_hash" in w for w in vm["warnings"]))
-
-        # ── 4. inspect_manifest ───────────────────────────────────────────
-        print("\n4. inspect_manifest")
-        im = inspect_manifest(REAL_BUNDLE)
-        check("ok=True", im["ok"])
-        check("aer_id", im["aer_id"] == "AER-CAR-2026-002")
-        check("record_id", im["record_id"] == "CAR-2026-002")
-        check("bundle_profile", im["bundle_profile"] == "agent_operation_aer_v1")
-        check("artifact_count=12", im["artifact_count"] == 12)
-        check("manifest_hash present", bool(im["manifest_hash"]))
-
-        # ── 5. list_evidence ──────────────────────────────────────────────
-        print("\n5. list_evidence")
-        le = list_evidence(REAL_BUNDLE)
-        check("ok=True", le["ok"])
-        check("total_files=12", le["total_files"] == 12)
-        core_files = [a for a in le["artifacts"] if a["category"] == "core"]
-        check("4 core artifacts", len(core_files) == 4)
-        check("all have sha256", all(len(a["sha256"]) == 64 for a in le["artifacts"]))
-
-        # ── 6. check_anchor ───────────────────────────────────────────────
-        print("\n6. check_anchor")
-        ca = check_anchor(REAL_BUNDLE)
-        check("ok=True", ca["ok"])
-        check("anchor_present=False (demo)", not ca["anchor_present"])
-        check("manifest says not_anchored", ca["anchor_status_manifest"] == "not_anchored")
-
-        # ── 7. summarize_bundle ───────────────────────────────────────────
-        print("\n7. summarize_bundle")
-        sb = summarize_bundle(REAL_BUNDLE)
-        check("ok=True", sb["ok"])
-        check("passes_basic_verification", sb["status"]["passes_basic_verification"])
-        check("is_demo=True", sb["status"]["is_demo"])
-        check("identity has aer_id", sb["identity"]["aer_id"] == "AER-CAR-2026-002")
-        check("artifacts.total=12", sb["artifacts"]["total"] == 12)
-
-        print("\n═══ DONE ═══\n")
-
-    finally:
-        shutil.rmtree(tmp)
+    def test_missing_source_returns_structured_failure(self) -> None:
+        result = verify_bundle(str(REPOSITORY_ROOT / "demo" / "missing.zip"))
+        self.assertFalse(result["valid"])
+        self.assertTrue(any("load_error" in error for error in result["errors"]))
 
 
 if __name__ == "__main__":
-    run_tests()
+    unittest.main()

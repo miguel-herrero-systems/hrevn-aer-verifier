@@ -1,191 +1,95 @@
-# HREVN™ AER Verifier
+# HREVN AER Verifier
 
-**Verify. Inspect. Trust.**
+Experimental, standard-library Python tools for inspecting the internal integrity of HREVN Agent Evaluation Record (AER) bundles.
 
-A Python plugin that gives AI agents structured, verifiable evidence to inspect, justify and reason over — without hallucinating on documents they cannot trust.
+**Status:** public technical alpha. The included bundles and anchor metadata are synthetic test fixtures.
 
----
+## What the verifier establishes
+
+- bundle files can be loaded from a ZIP archive or directory
+- declared SHA-256 checksums match the included bytes
+- the deterministic root hash can be recomputed from the declared root scope
+- manifest metadata and evidence inventory can be inspected
+- optional anchor metadata is present and parseable
+
+## What it does not establish
+
+- authorship or signer identity
+- validity of a digital signature
+- truth or semantic correctness of the recorded event
+- inclusion of a root hash in an Ethereum transaction
+- transaction finality or canonical-chain membership
+- regulatory compliance
+
+`check_anchor` currently reports and parses anchor metadata. It does **not** query an RPC endpoint, retrieve a receipt, validate calldata, or establish finality.
 
 ## Quickstart
 
 ```bash
-git clone https://github.com/hrevn/aer-verifier
-cd aer-verifier
-python quickstart.py
+git clone https://github.com/ai-human-andalusia/hrevn-aer-verifier.git
+cd hrevn-aer-verifier
+python3 quickstart.py
+python3 -m unittest discover -s tests -v
 ```
 
-No pip install. No configuration. No API keys.  
-Python 3.10+ standard library only.
-
-**Output:**
-
-```
-▶  Bundle 1 — Valid AER (privileged access change)
-   Integrity:   ✔  VALID  (expected)
-   Root hash:   match ✔
-   AER ID:      AER-CAR-2026-002
-   Artifacts:   12 total  [core: 4 | control: 1 | support: 4 | verification: 3]
-
-▶  Bundle 2 — Tampered AER (operation_record modified)
-   Integrity:   ✘  INVALID  (expected)
-   ✘ checksum_mismatch: operation_record.json
-   ✘ root_hash_mismatch: computed hash does not match declared
-
-▶  Bundle 3 — Valid AER + Blockchain anchor (PII data export)
-   Integrity:   ✔  VALID  (expected)
-   Anchor:      ⛓  sepolia  0x7f3a2c1d8e4b9f0a6c...
-```
-
----
+No API key or third-party Python dependency is required for the local demonstration.
 
 ## Tools
 
-| Tool | What it does |
+| Tool | Result |
 |---|---|
-| `summarize_bundle` | Executive summary — **start here** |
-| `verify_bundle` | Full integrity check: checksums + root hash |
-| `inspect_manifest` | Read bundle metadata |
-| `list_evidence` | List all artifacts with SHA-256 hashes |
-| `check_anchor` | Check for external blockchain anchor |
+| `summarize_bundle` | Compact structural and integrity summary |
+| `verify_bundle` | Checksum and deterministic root-hash verification |
+| `inspect_manifest` | Parsed manifest metadata |
+| `list_evidence` | Artifact inventory and declared hashes |
+| `check_anchor` | Presence and parsing of anchor metadata; no chain verification |
 
-### CLI usage
+Example:
 
 ```bash
-python main.py summarize_bundle source=demo/CAR-2026-002_valid.zip
-python main.py verify_bundle    source=demo/CAR-2026-002_tampered.zip
-python main.py list_evidence    source=demo/CAR-2026-003_anchored.zip
-python main.py check_anchor     source=demo/CAR-2026-003_anchored.zip
+python3 main.py verify_bundle source=demo/CAR-2026-002_valid.zip
+python3 main.py verify_bundle source=demo/CAR-2026-002_tampered.zip
+python3 main.py check_anchor source=demo/CAR-2026-003_anchored.zip
 ```
 
-### Python usage
+All tool results are JSON-serializable dictionaries.
 
-```python
-from tools import verify_bundle, summarize_bundle
+## Demonstration fixtures
 
-result = verify_bundle("path/to/bundle.zip")
-if result["valid"]:
-    print("Bundle is intact. Root hash matches.")
-else:
-    print("Errors:", result["errors"])
-```
+The `demo/` directory contains synthetic fixtures for three behaviors:
 
-All tools return JSON-serialisable dicts — designed for agent pipelines, not human parsing.
+1. internally consistent bundle
+2. bundle whose operation record was altered
+3. internally consistent bundle containing synthetic Sepolia-style anchor metadata
 
----
+The transaction hash, block number, timestamps, identities, and operational events in these fixtures must not be interpreted as production evidence or as proof of an on-chain transaction.
 
-## What is an AER bundle?
+## Regulatory context
 
-An **Agent Evaluation Record (AER)** is a verifiable package documenting an AI agent operation:
+The EU AI Act separates several obligations that are sometimes conflated: Article 9 addresses risk management, Article 12 addresses automatic record-keeping capabilities for high-risk systems, and Article 19 addresses retention of automatically generated logs by providers where those logs are under their control.
 
-```
-bundle.zip
-├── operation_record.json       ← what action the agent proposed
-├── approval_record.json        ← who approved it and why
-├── execution_record.json       ← outcome + cryptographic seal
-├── agent_operation_review_report.pdf
-├── manifest.json               ← structure + verification rules
-├── CHECKSUMS.sha256            ← individual file hashes
-├── ROOT_HASH_SHA256.txt        ← root hash of authoritative files
-└── ANCHOR_SEPOLIA.json         ← (optional) blockchain timestamp
-```
-
-The root hash is computed deterministically from the authoritative files.  
-Any alteration — even a single byte — produces a mismatch. The verifier detects it.
-
----
-
-## Why this exists
-
-AI agents are increasingly executing consequential actions: password resets, data exports, access changes, financial transactions.
-
-When something goes wrong, the question is always the same:
-
-> *"What exactly did the agent do, who approved it, and can you prove it wasn't modified after the fact?"*
-
-Today that question has no good answer. AER bundles are the answer.
-
----
-
-## EU AI Act
-
-High-risk AI systems under **EU AI Act Article 9** must maintain logs of system operation sufficient to ensure traceability. The compliance deadline for most high-risk systems is **August 2026**.
-
-AER bundles are designed as the verifiable operational record that satisfies this requirement:
-
-- structured evidence of agent decisions
-- human approval chain included
-- cryptographic integrity (SHA-256, root hash)
-- optional blockchain anchoring for non-repudiation
-- machine-readable for automated compliance pipelines
-
----
+AER bundles may support documentation, traceability, or review processes. This repository does not determine whether a system is high-risk and does not claim that using the format satisfies any legal obligation. Legal and compliance conclusions require an independent assessment of the complete system and its intended use.
 
 ## Architecture
 
+```text
+main.py              command entry point
+quickstart.py        local synthetic demonstration
+core/                loading, manifest parsing, checksums, root hashing
+tools/               structured inspection functions
+tests/               reproducible tests using bundled fixtures
+demo/                synthetic fixtures
+skills/              agent-facing usage instructions
 ```
-hrevn_plugin/
-├── main.py                  ← CLI entrypoint
-├── quickstart.py            ← demo runner
-├── demo/                    ← 3 demo bundles (valid / tampered / anchored)
-├── tools/
-│   ├── verify_bundle.py
-│   ├── inspect_manifest.py
-│   ├── list_evidence.py
-│   ├── check_anchor.py
-│   └── summarize_bundle.py
-├── core/
-│   ├── bundle_loader.py     ← ZIP + directory support
-│   ├── hashing.py           ← SHA-256, root hash computation
-│   ├── manifest_reader.py   ← manifest.json parser
-│   └── checksum_validator.py
-├── skills/                  ← Codex plugin skill definitions
-└── .codex-plugin/
-    └── plugin.json          ← Codex plugin manifest
-```
-
-**No external dependencies.** Python stdlib only.
-
----
-
-## Codex plugin
-
-This repo is structured as a Codex-compatible plugin.
-
-To add to a local marketplace:
-
-```json
-// .agents/plugins/marketplace.json
-{
-  "plugins": [{
-    "id": "hrevn-aer-verifier",
-    "manifest": ".codex-plugin/plugin.json",
-    "entry": "main.py"
-  }]
-}
-```
-
-Then in Codex: `/plugins` → install → `@hrevn-aer-verifier summarize_bundle source=...`
-
----
-
-## Roadmap
-
-- [x] v0.1 — Verify, inspect, list, anchor check, summarize
-- [ ] v0.2 — AER bundle generator (API + CLI)
-- [ ] v0.3 — Signed bundles (Ed25519)
-- [ ] v0.4 — Live blockchain anchoring (Sepolia / Ethereum mainnet)
-- [ ] v1.0 — Compliance API for EU AI Act Article 9
-
----
 
 ## License
 
-| Component | License |
-|---|---|
-| Verifier code (`core/`, `tools/`, `main.py`) | MIT — see `LICENSE-VERIFIER` |
-| AER format, manifest schema, ROOT_SPEC_AER_V1 | Proprietary — see `LICENSE-FORMAT` |
-| HREVN trademark and certification mark | All rights reserved |
+- Verifier software: MIT; see `LICENSE-VERIFIER`.
+- AER format and demo fixtures: separate terms; see `LICENSE-FORMAT`.
+- HREVN name and marks: all rights reserved.
 
----
+See `LICENSE.md` for the repository-level scope map. Questions about licensing should use [contact@hrevn.com](mailto:contact@hrevn.com). The license documents, not this summary, control.
 
-*Built to give AI agents something they urgently lack: structured, verifiable evidence they can inspect, justify and reason over.*
+## Security
+
+Do not disclose suspected vulnerabilities in a public issue. Follow the repository security policy or email [contact@hrevn.com](mailto:contact@hrevn.com) with the subject `[SECURITY] hrevn-aer-verifier`.

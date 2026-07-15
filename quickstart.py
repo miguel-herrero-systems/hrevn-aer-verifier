@@ -32,7 +32,7 @@ BUNDLES = [
     },
     {
         "file": "CAR-2026-003_anchored.zip",
-        "label": "Bundle 3 — Valid AER + Blockchain anchor (PII data export)",
+        "label": "Bundle 3 — Valid AER + synthetic anchor metadata (PII data export)",
         "expect": "PASS",
     },
 ]
@@ -106,7 +106,8 @@ def run_bundle(bundle_def):
         anchor_data = ca.get("anchor_data") or {}
         tx = anchor_data.get("tx_hash", "")
         chain = anchor_data.get("chain", "")
-        print(f"  {GREEN}Anchor:      ⛓  {chain}  {tx[:20]}...{RESET}")
+        print(f"  {GREEN}Metadata:    ⛓  {chain}  {tx[:20]}...{RESET}")
+        print("  Chain check: not performed")
     else:
         print(f"  Anchor:      none")
 
